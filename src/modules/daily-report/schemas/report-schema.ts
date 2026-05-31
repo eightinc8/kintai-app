@@ -3,7 +3,7 @@ import { z } from "zod";
 export const dailyReportSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   todaysPlan: z.string().optional().default(""),
-  workDone: z.string().min(1, "作業内容を入力してください"),
+  workDone: z.string().min(1, "今日の作業報告を入力してください"),
   goodPoints: z.string().optional().default(""),
   reflections: z.string().optional().default(""),
   ideas: z.string().optional().default(""),

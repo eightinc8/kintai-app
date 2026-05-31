@@ -326,23 +326,23 @@ export default function HistoryPage() {
                 </div>
                 {report.todaysPlan && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground">今日のやること</p>
+                    <p className="text-xs font-semibold text-muted-foreground">今日の作業の内容</p>
                     <p className="text-sm whitespace-pre-wrap">{report.todaysPlan}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground">作業内容</p>
+                  <p className="text-xs font-semibold text-muted-foreground">今日の作業報告</p>
                   <p className="text-sm whitespace-pre-wrap">{report.workDone}</p>
                 </div>
                 {report.goodPoints && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground">良かった点</p>
+                    <p className="text-xs font-semibold text-muted-foreground">今日の良かった点</p>
                     <p className="text-sm whitespace-pre-wrap">{report.goodPoints}</p>
                   </div>
                 )}
                 {report.reflections && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground">反省・改善点</p>
+                    <p className="text-xs font-semibold text-muted-foreground">アイディア・要望・改善</p>
                     <p className="text-sm whitespace-pre-wrap">{report.reflections}</p>
                   </div>
                 )}
@@ -465,7 +465,7 @@ export default function HistoryPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1">
-              <Label>今日のやること</Label>
+              <Label>今日の作業の内容</Label>
               <Textarea
                 value={editTodaysPlan}
                 onChange={(e) => setEditTodaysPlan(e.target.value)}
@@ -473,7 +473,7 @@ export default function HistoryPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>作業内容</Label>
+              <Label>今日の作業報告</Label>
               <Textarea
                 value={editWorkDone}
                 onChange={(e) => setEditWorkDone(e.target.value)}
@@ -481,7 +481,7 @@ export default function HistoryPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>良かった点</Label>
+              <Label>今日の良かった点</Label>
               <Textarea
                 value={editGoodPoints}
                 onChange={(e) => setEditGoodPoints(e.target.value)}
@@ -489,7 +489,7 @@ export default function HistoryPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>反省・改善点</Label>
+              <Label>アイディア・要望・改善</Label>
               <Textarea
                 value={editReflections}
                 onChange={(e) => setEditReflections(e.target.value)}

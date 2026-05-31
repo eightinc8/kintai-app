@@ -232,6 +232,13 @@ export async function updateIdeaCategory(
   return idea;
 }
 
+export async function deleteIdea(id: string): Promise<boolean> {
+  const result = await findRow("ideas", "id", id);
+  if (!result) return false;
+  await deleteRow("ideas", result.rowIndex);
+  return true;
+}
+
 export async function deleteReport(id: string): Promise<boolean> {
   const result = await findRow("daily_reports", "id", id);
   if (!result) return false;

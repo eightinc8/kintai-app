@@ -91,6 +91,18 @@ export default function IdeasPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("このアイディアを削除しますか？")) return;
+    try {
+      const res = await fetch(`/api/ideas?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("アイディアを削除しました");
+      load();
+    } catch {
+      toast.error("削除に失敗しました");
+    }
+  };
+
   const handleCategory = async (id: string, category: string) => {
     try {
       const res = await fetch("/api/ideas", {
@@ -270,30 +282,40 @@ export default function IdeasPage() {
                   </TableCell>
                   {isAdmin && (
                     <TableCell className="text-right">
-                      {idea.isDone ? (
+                      <div className="flex items-center gap-1 justify-end">
+                        {idea.isDone ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggle(idea.id)}
+                          >
+                            未対応に戻す
+                          </Button>
+                        ) : (
+                          <Select
+                            onValueChange={(v) => { if (v) handleToggle(idea.id, String(v)); }}
+                          >
+                            <SelectTrigger className="w-28 h-8 text-xs">
+                              <SelectValue placeholder="対応済み" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {staffList.map((s) => (
+                                <SelectItem key={s.email} value={s.email}>
+                                  {s.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          onClick={() => handleToggle(idea.id)}
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(idea.id)}
                         >
-                          未対応に戻す
+                          削除
                         </Button>
-                      ) : (
-                        <Select
-                          onValueChange={(v) => { if (v) handleToggle(idea.id, String(v)); }}
-                        >
-                          <SelectTrigger className="w-28 h-8 text-xs">
-                            <SelectValue placeholder="対応済み" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {staffList.map((s) => (
-                              <SelectItem key={s.email} value={s.email}>
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>

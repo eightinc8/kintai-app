@@ -388,7 +388,8 @@ export default function ReportPage() {
         <CardContent className="space-y-4">
           {hasRemoteShift && (
             <div className="space-y-1">
-              <Label>今日のやること</Label>
+              <Label>今日の作業の内容</Label>
+              <p className="text-xs text-muted-foreground mb-1">在宅での出勤時に記入</p>
               <Textarea
                 placeholder="在宅勤務で取り組む内容を記入..."
                 value={todaysPlan}
@@ -399,7 +400,8 @@ export default function ReportPage() {
           )}
 
           <div className="space-y-1">
-            <Label>今日の作業内容</Label>
+            <Label>今日の作業報告</Label>
+            <p className="text-xs text-muted-foreground mb-1">勤務終了前に記入</p>
             <Textarea
               placeholder="今日行った作業を記入..."
               value={workDone}
@@ -410,6 +412,7 @@ export default function ReportPage() {
 
           <div className="space-y-1">
             <Label>今日の良かった点</Label>
+            <p className="text-xs text-muted-foreground mb-1">勤務終了前に記入</p>
             <Textarea
               placeholder="良かった点を記入..."
               value={goodPoints}
@@ -419,9 +422,9 @@ export default function ReportPage() {
           </div>
 
           <div className="space-y-1">
-            <Label>反省や改善点</Label>
+            <Label>アイディア・要望・改善</Label>
             <Textarea
-              placeholder="反省や改善点を記入..."
+              placeholder="アイディアや要望、改善点を記入..."
               value={reflections}
               onChange={(e) => setReflections(e.target.value)}
               rows={3}

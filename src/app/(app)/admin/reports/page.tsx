@@ -252,6 +252,35 @@ export default function AdminReportsPage() {
         </div>
       </div>
 
+      {filterEmail !== "all" && (() => {
+        const personAttendance = attendance.filter((a) => a.staffEmail === filterEmail);
+        const days = new Set(personAttendance.map((a) => a.date)).size;
+        const hours = personAttendance.reduce((s, a) => s + a.workHours, 0);
+        const transport = personAttendance.reduce((s, a) => s + a.transportCost, 0);
+        return (
+          <div className="grid grid-cols-3 gap-3">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold">{days} 日</p>
+                <p className="text-xs text-muted-foreground">出勤日数</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold">{hours} 時間</p>
+                <p className="text-xs text-muted-foreground">合計勤務時間</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold">{transport.toLocaleString()} 円</p>
+                <p className="text-xs text-muted-foreground">交通費合計</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
+
       {filtered.length === 0 && (
         <p className="text-muted-foreground">{loading ? "只今読み込み中です" : "日報がありません。"}</p>
       )}
@@ -350,7 +379,7 @@ export default function AdminReportsPage() {
               <p className="text-sm font-semibold mb-3">業務報告</p>
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label>今日のやること</Label>
+                  <Label>今日の作業の内容</Label>
                   <Textarea
                     value={editTodaysPlan}
                     onChange={(e) => setEditTodaysPlan(e.target.value)}
@@ -358,7 +387,7 @@ export default function AdminReportsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>作業内容</Label>
+                  <Label>今日の作業報告</Label>
                   <Textarea
                     value={editWorkDone}
                     onChange={(e) => setEditWorkDone(e.target.value)}
@@ -366,7 +395,7 @@ export default function AdminReportsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>良かった点</Label>
+                  <Label>今日の良かった点</Label>
                   <Textarea
                     value={editGoodPoints}
                     onChange={(e) => setEditGoodPoints(e.target.value)}
@@ -374,7 +403,7 @@ export default function AdminReportsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>反省・改善点</Label>
+                  <Label>アイディア・要望・改善</Label>
                   <Textarea
                     value={editReflections}
                     onChange={(e) => setEditReflections(e.target.value)}
@@ -463,23 +492,23 @@ export default function AdminReportsPage() {
             })()}
             {report.todaysPlan && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground">今日のやること</p>
+                <p className="text-xs font-semibold text-muted-foreground">今日の作業の内容</p>
                 <p className="text-sm whitespace-pre-wrap">{report.todaysPlan}</p>
               </div>
             )}
             <div>
-              <p className="text-xs font-semibold text-muted-foreground">作業内容</p>
+              <p className="text-xs font-semibold text-muted-foreground">今日の作業報告</p>
               <p className="text-sm whitespace-pre-wrap">{report.workDone}</p>
             </div>
             {report.goodPoints && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground">良かった点</p>
+                <p className="text-xs font-semibold text-muted-foreground">今日の良かった点</p>
                 <p className="text-sm whitespace-pre-wrap">{report.goodPoints}</p>
               </div>
             )}
             {report.reflections && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground">反省・改善点</p>
+                <p className="text-xs font-semibold text-muted-foreground">アイディア・要望・改善</p>
                 <p className="text-sm whitespace-pre-wrap">{report.reflections}</p>
               </div>
             )}

@@ -4,6 +4,7 @@ import {
   submitIdeas,
   toggleIdeaDone,
   updateIdeaCategory,
+  deleteIdea,
 } from "@/modules/daily-report/services/report-service";
 import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 
@@ -61,5 +62,26 @@ export async function PATCH(request: Request) {
   } catch (e) {
     console.error("Idea update error:", e);
     return NextResponse.json({ error: "更新に失敗しました" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ error: "IDが必要です" }, { status: 400 });
+    }
+    const result = await deleteIdea(id);
+    if (!result) {
+      return NextResponse.json({ error: "見つかりません" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    console.error("Idea delete error:", e);
+    return NextResponse.json({ error: "削除に失敗しました" }, { status: 500 });
   }
 }

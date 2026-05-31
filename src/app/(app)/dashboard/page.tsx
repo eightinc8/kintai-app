@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, addMonths, subMonths } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -19,7 +20,12 @@ import type { Staff } from "@/types/user";
 export default function DashboardPage() {
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === "admin";
-  const currentMonth = format(new Date(), "yyyy-MM");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const currentMonth = format(selectedDate, "yyyy-MM");
+
+  const goToPrevMonth = () => setSelectedDate((d) => subMonths(d, 1));
+  const goToNextMonth = () => setSelectedDate((d) => addMonths(d, 1));
+  const goToThisMonth = () => setSelectedDate(new Date());
 
   const [myAttendance, setMyAttendance] = useState<Attendance[]>([]);
   const [allAttendance, setAllAttendance] = useState<Attendance[]>([]);
@@ -67,11 +73,24 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">ダッシュボード</h2>
-        <p className="text-muted-foreground">
-          {format(new Date(), "yyyy年M月", { locale: ja })}
-        </p>
+      <div className="flex justify-between items-center flex-wrap gap-3">
+        <div>
+          <h2 className="text-2xl font-bold">ダッシュボード</h2>
+          <p className="text-muted-foreground">
+            {format(selectedDate, "yyyy年M月", { locale: ja })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={goToPrevMonth}>
+            ← 前月
+          </Button>
+          <Button variant="outline" size="sm" onClick={goToThisMonth}>
+            今月
+          </Button>
+          <Button variant="outline" size="sm" onClick={goToNextMonth}>
+            翌月 →
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
