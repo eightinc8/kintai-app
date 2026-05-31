@@ -128,6 +128,36 @@ export async function submitReport(
   return report;
 }
 
+export async function submitIdeas(
+  staffEmail: string,
+  ideasText: string
+): Promise<Idea[]> {
+  const now = new Date().toISOString();
+  const date = now.slice(0, 10);
+  const lines = ideasText
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const created: Idea[] = [];
+  for (const line of lines) {
+    const idea: Idea = {
+      id: uuidv4(),
+      staffEmail,
+      date,
+      content: line,
+      category: "",
+      isDone: false,
+      doneAt: "",
+      doneBy: "",
+      createdAt: now,
+    };
+    await appendRow("ideas", ideaToRow(idea));
+    created.push(idea);
+  }
+  return created;
+}
+
 export async function getReportByDate(
   staffEmail: string,
   date: string

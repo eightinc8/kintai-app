@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getAllIdeas,
+  submitIdeas,
   toggleIdeaDone,
   updateIdeaCategory,
 } from "@/modules/daily-report/services/report-service";
@@ -16,6 +17,29 @@ export async function GET() {
   } catch (e) {
     console.error("Ideas fetch error:", e);
     return NextResponse.json([], { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  const { session, error } = await requireAuth();
+  if (error) return error;
+
+  try {
+    const { staffEmail, ideas } = await request.json();
+    if (staffEmail !== session!.user.email) {
+      return NextResponse.json(
+        { error: "他のユーザーとしての操作はできません" },
+        { status: 403 }
+      );
+    }
+    const result = await submitIdeas(staffEmail, ideas);
+    return NextResponse.json(result);
+  } catch (e) {
+    console.error("Idea submit error:", e);
+    return NextResponse.json(
+      { error: "アイディアの投稿に失敗しました" },
+      { status: 500 }
+    );
   }
 }
 
