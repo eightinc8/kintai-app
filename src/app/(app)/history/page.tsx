@@ -238,6 +238,33 @@ export default function HistoryPage() {
         </div>
       </div>
 
+      <div className="grid grid-cols-3 gap-3">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold">
+              {new Set(attendance.map((a) => a.date)).size} 日
+            </p>
+            <p className="text-xs text-muted-foreground">出勤日数</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold">
+              {attendance.reduce((s, a) => s + a.workHours, 0)} 時間
+            </p>
+            <p className="text-xs text-muted-foreground">合計勤務時間</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold">
+              {attendance.reduce((s, a) => s + a.transportCost, 0).toLocaleString()} 円
+            </p>
+            <p className="text-xs text-muted-foreground">交通費合計</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {combined.length === 0 && (
         <p className="text-muted-foreground">{loading ? "只今読み込み中です" : "データがありません。"}</p>
       )}
