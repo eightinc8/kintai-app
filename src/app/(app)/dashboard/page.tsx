@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { format, addMonths, subMonths } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useAuth } from "@/lib/auth-context";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -15,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Attendance } from "@/types/attendance";
+import type { DailyReport } from "@/types/report";
 import type { Staff } from "@/types/user";
 
 export default function DashboardPage() {
@@ -30,12 +32,23 @@ export default function DashboardPage() {
   const [myAttendance, setMyAttendance] = useState<Attendance[]>([]);
   const [allAttendance, setAllAttendance] = useState<Attendance[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [myReports, setMyReports] = useState<DailyReport[]>([]);
 
   useEffect(() => {
     if (!currentUser) return;
     fetch(`/api/attendance?email=${encodeURIComponent(currentUser.email)}&month=${currentMonth}`)
       .then((r) => r.json())
       .then(setMyAttendance)
+      .catch(() => {});
+    fetch("/api/reports")
+      .then((r) => r.json())
+      .then((all: DailyReport[]) => {
+        setMyReports(
+          all
+            .filter((r) => r.staffEmail === currentUser.email && r.date.startsWith(currentMonth))
+            .sort((a, b) => b.date.localeCompare(a.date))
+        );
+      })
       .catch(() => {});
     if (isAdmin) {
       fetch(`/api/attendance?month=${currentMonth}`)
@@ -159,6 +172,48 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>提出した日報</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {myReports.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              この月の日報はありません
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>日付</TableHead>
+                  <TableHead>作業報告</TableHead>
+                  <TableHead>コメント</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {myReports.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="whitespace-nowrap">
+                      {format(new Date(r.date), "M/d（E）", { locale: ja })}
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {r.workDone}
+                    </TableCell>
+                    <TableCell>
+                      {r.adminComment ? (
+                        <Badge>コメントあり</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

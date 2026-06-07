@@ -16,7 +16,11 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (pathname.startsWith("/admin") && req.auth?.user?.role !== "admin") {
+  if (
+    pathname.startsWith("/admin") &&
+    !pathname.startsWith("/admin/reports") &&
+    req.auth?.user?.role !== "admin"
+  ) {
     return NextResponse.redirect(new URL("/report", req.url));
   }
 

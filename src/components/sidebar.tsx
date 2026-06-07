@@ -10,11 +10,11 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 const staffNav = [
-  { label: "日報を入力する", href: "/report", icon: "📝" },
-  { label: "アイディア投稿", href: "/ideas/new", icon: "✨" },
-  { label: "勤怠履歴", href: "/history", icon: "📋" },
-  { label: "日報一覧", href: "/admin/reports", icon: "📄" },
   { label: "ダッシュボード", href: "/dashboard", icon: "📊" },
+  { label: "日報を入力する", href: "/report", icon: "📝" },
+  { label: "日報一覧", href: "/admin/reports", icon: "📄" },
+  { label: "勤怠履歴", href: "/history", icon: "📋" },
+  { label: "アイディア投稿", href: "/ideas/new", icon: "✨" },
   { label: "アイディア一覧", href: "/ideas", icon: "💡" },
 ];
 
