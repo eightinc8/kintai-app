@@ -225,13 +225,13 @@ export default function IdeasPage() {
                 <TableHead>日付</TableHead>
                 <TableHead>内容</TableHead>
                 <TableHead>対応者</TableHead>
-                {isAdmin && <TableHead className="text-right">操作</TableHead>}
+                <TableHead className="text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     {loading ? "只今読み込み中です" : "アイディアがありません"}
                   </TableCell>
                 </TableRow>
@@ -247,28 +247,22 @@ export default function IdeasPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {isAdmin ? (
-                      <Select
-                        value={idea.category || "none"}
-                        onValueChange={(v) => handleCategory(idea.id, v === "none" ? "" : v ?? "")}
-                      >
-                        <SelectTrigger className="w-32 h-8 text-xs">
-                          <SelectValue>
-                            {idea.category || "未分類"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">未分類</SelectItem>
-                          {categories.map((c) => (
-                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">
-                        {idea.category || "未分類"}
-                      </span>
-                    )}
+                    <Select
+                      value={idea.category || "none"}
+                      onValueChange={(v) => handleCategory(idea.id, v === "none" ? "" : v ?? "")}
+                    >
+                      <SelectTrigger className="w-32 h-8 text-xs">
+                        <SelectValue>
+                          {idea.category || "未分類"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">未分類</SelectItem>
+                        {categories.map((c) => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>{staffName(idea.staffEmail)}</TableCell>
                   <TableCell>{format(new Date(idea.date), "M/d", { locale: ja })}</TableCell>
@@ -280,33 +274,33 @@ export default function IdeasPage() {
                       <span className="text-sm text-muted-foreground">-</span>
                     ) : null}
                   </TableCell>
-                  {isAdmin && (
-                    <TableCell className="text-right">
-                      <div className="flex items-center gap-1 justify-end">
-                        {idea.isDone ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleToggle(idea.id)}
-                          >
-                            未対応に戻す
-                          </Button>
-                        ) : (
-                          <Select
-                            onValueChange={(v) => { if (v) handleToggle(idea.id, String(v)); }}
-                          >
-                            <SelectTrigger className="w-28 h-8 text-xs">
-                              <SelectValue placeholder="対応済み" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {staffList.map((s) => (
-                                <SelectItem key={s.email} value={s.email}>
-                                  {s.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
+                  <TableCell className="text-right">
+                    <div className="flex items-center gap-1 justify-end">
+                      {idea.isDone ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggle(idea.id)}
+                        >
+                          未対応に戻す
+                        </Button>
+                      ) : (
+                        <Select
+                          onValueChange={(v) => { if (v) handleToggle(idea.id, String(v)); }}
+                        >
+                          <SelectTrigger className="w-28 h-8 text-xs">
+                            <SelectValue placeholder="対応済み" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {staffList.map((s) => (
+                              <SelectItem key={s.email} value={s.email}>
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {isAdmin && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -315,9 +309,9 @@ export default function IdeasPage() {
                         >
                           削除
                         </Button>
-                      </div>
-                    </TableCell>
-                  )}
+                      )}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

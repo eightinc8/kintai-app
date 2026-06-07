@@ -22,6 +22,8 @@ function rowToReport(row: Record<string, string>): DailyReport {
     adminComment: row.admin_comment,
     adminCommentBy: row.admin_comment_by,
     adminCommentAt: row.admin_comment_at,
+    staffReply: row.staff_reply || "",
+    staffReplyAt: row.staff_reply_at || "",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -39,6 +41,8 @@ function reportToRow(r: DailyReport): Record<string, string> {
     admin_comment: r.adminComment,
     admin_comment_by: r.adminCommentBy,
     admin_comment_at: r.adminCommentAt,
+    staff_reply: r.staffReply || "",
+    staff_reply_at: r.staffReplyAt || "",
     created_at: r.createdAt,
     updated_at: r.updatedAt,
   };
@@ -93,6 +97,8 @@ export async function submitReport(
     adminComment: existing ? existing.data.admin_comment : "",
     adminCommentBy: existing ? existing.data.admin_comment_by : "",
     adminCommentAt: existing ? existing.data.admin_comment_at : "",
+    staffReply: existing ? (existing.data.staff_reply || "") : "",
+    staffReplyAt: existing ? (existing.data.staff_reply_at || "") : "",
     createdAt: existing ? existing.data.created_at : now,
     updatedAt: now,
   };
@@ -130,7 +136,8 @@ export async function submitReport(
 
 export async function submitIdeas(
   staffEmail: string,
-  ideasText: string
+  ideasText: string,
+  category: string = ""
 ): Promise<Idea[]> {
   const now = new Date().toISOString();
   const date = now.slice(0, 10);
@@ -146,7 +153,7 @@ export async function submitIdeas(
       staffEmail,
       date,
       content: line,
-      category: "",
+      category,
       isDone: false,
       doneAt: "",
       doneBy: "",
@@ -186,6 +193,22 @@ export async function submitAdminComment(
   report.adminComment = comment;
   report.adminCommentBy = adminEmail;
   report.adminCommentAt = new Date().toISOString();
+  report.updatedAt = new Date().toISOString();
+
+  await updateRow("daily_reports", result.rowIndex, reportToRow(report));
+  return report;
+}
+
+export async function submitStaffReply(
+  reportId: string,
+  reply: string
+): Promise<DailyReport | undefined> {
+  const result = await findRow("daily_reports", "id", reportId);
+  if (!result) return undefined;
+
+  const report = rowToReport(result.data);
+  report.staffReply = reply;
+  report.staffReplyAt = new Date().toISOString();
   report.updatedAt = new Date().toISOString();
 
   await updateRow("daily_reports", result.rowIndex, reportToRow(report));

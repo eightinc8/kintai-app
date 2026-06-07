@@ -78,6 +78,8 @@ export const mockReports: DailyReport[] = [
     adminComment: "",
     adminCommentBy: "",
     adminCommentAt: "",
+    staffReply: "",
+    staffReplyAt: "",
     createdAt: now,
     updatedAt: now,
   },

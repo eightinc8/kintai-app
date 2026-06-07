@@ -26,14 +26,14 @@ export async function POST(request: Request) {
   if (error) return error;
 
   try {
-    const { staffEmail, ideas } = await request.json();
+    const { staffEmail, ideas, category } = await request.json();
     if (staffEmail !== session!.user.email) {
       return NextResponse.json(
         { error: "他のユーザーとしての操作はできません" },
         { status: 403 }
       );
     }
-    const result = await submitIdeas(staffEmail, ideas);
+    const result = await submitIdeas(staffEmail, ideas, category || "");
     return NextResponse.json(result);
   } catch (e) {
     console.error("Idea submit error:", e);
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { session, error } = await requireAdmin();
+  const { session, error } = await requireAuth();
   if (error) return error;
 
   try {

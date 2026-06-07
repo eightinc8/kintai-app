@@ -1,19 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
+
+interface Category {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
 
 export default function IdeasNewPage() {
   const { currentUser } = useAuth();
   const router = useRouter();
   const [ideas, setIdeas] = useState("");
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async () => {
     if (!currentUser || !ideas.trim()) return;
@@ -25,6 +47,7 @@ export default function IdeasNewPage() {
         body: JSON.stringify({
           staffEmail: currentUser.email,
           ideas: ideas,
+          category: category,
         }),
       });
       if (!res.ok) throw new Error();
@@ -53,6 +76,23 @@ export default function IdeasNewPage() {
           <CardTitle>アイディア・要望</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <Label>カテゴリ</Label>
+            <Select value={category || "none"} onValueChange={(v) => { if (v) setCategory(v === "none" ? "" : v); }}>
+              <SelectTrigger>
+                <SelectValue>
+                  {category || "未分類"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">未分類</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-1">
             <Label>内容</Label>
             <Textarea

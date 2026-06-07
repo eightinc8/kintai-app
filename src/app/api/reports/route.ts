@@ -3,6 +3,7 @@ import {
   submitReport,
   getAllReports,
   submitAdminComment,
+  submitStaffReply,
   deleteReport,
   getReportById,
   updateReportById,
@@ -40,12 +41,23 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { session, error } = await requireAdmin();
+  const { session, error } = await requireAuth();
   if (error) return error;
 
   try {
-    const { reportId, comment } = await request.json();
-    const result = await submitAdminComment(reportId, comment, session!.user.email!);
+    const body = await request.json();
+
+    // スタッフ返信
+    if (body.staffReply !== undefined) {
+      const result = await submitStaffReply(body.reportId, body.staffReply);
+      return NextResponse.json(result);
+    }
+
+    // 管理者コメント（管理者のみ）
+    if (session!.user.role !== "admin") {
+      return NextResponse.json({ error: "管理者のみコメントできます" }, { status: 403 });
+    }
+    const result = await submitAdminComment(body.reportId, body.comment, session!.user.email!);
     return NextResponse.json(result);
   } catch (e) {
     console.error("Comment submit error:", e);

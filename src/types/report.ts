@@ -9,6 +9,8 @@ export interface DailyReport {
   adminComment: string;
   adminCommentBy: string;
   adminCommentAt: string;
+  staffReply: string;
+  staffReplyAt: string;
   createdAt: string;
   updatedAt: string;
 }

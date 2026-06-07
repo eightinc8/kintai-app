@@ -90,9 +90,7 @@ export default function AdminReportsPage() {
   };
   useEffect(() => { load(); }, [monthStr]);
 
-  if (currentUser?.role !== "admin") {
-    return <p className="text-muted-foreground">管理者のみアクセスできます。</p>;
-  }
+  const isAdmin = currentUser?.role === "admin";
 
   const filtered = reports
     .filter((r) => r.date.startsWith(monthStr))
@@ -212,10 +210,40 @@ export default function AdminReportsPage() {
     }
   };
 
+  const [replyMap, setReplyMap] = useState<Record<string, string>>({});
+
+  const handleStaffReply = async (reportId: string) => {
+    const reply = replyMap[reportId];
+    if (!reply?.trim()) return;
+    try {
+      const res = await fetch("/api/reports", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId, staffReply: reply }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("返信を送信しました");
+      setReplyMap((prev) => ({ ...prev, [reportId]: "" }));
+      load();
+    } catch {
+      toast.error("返信の送信に失敗しました");
+    }
+  };
+
+  // 管理者向け: 未読返信の数
+  const unreadReplyCount = isAdmin
+    ? filtered.filter((r) => r.staffReply && r.staffReply.trim()).length
+    : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-3">
-        <h2 className="text-2xl font-bold">日報一覧</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold">日報一覧</h2>
+          {isAdmin && unreadReplyCount > 0 && (
+            <Badge variant="destructive">{unreadReplyCount}件の返信あり</Badge>
+          )}
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1">
             <Button
@@ -236,19 +264,21 @@ export default function AdminReportsPage() {
               ▶
             </Button>
           </div>
-          <Select value={filterEmail} onValueChange={(v) => v && setFilterEmail(v)}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="スタッフ絞り込み">
-                {filterEmail === "all" ? "全員" : staffName(filterEmail)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全員</SelectItem>
-              {staffList.map((s) => (
-                <SelectItem key={s.email} value={s.email}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isAdmin && (
+            <Select value={filterEmail} onValueChange={(v) => v && setFilterEmail(v)}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="スタッフ絞り込み">
+                  {filterEmail === "all" ? "全員" : staffName(filterEmail)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全員</SelectItem>
+                {staffList.map((s) => (
+                  <SelectItem key={s.email} value={s.email}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -431,21 +461,28 @@ export default function AdminReportsPage() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 {report.adminComment && <Badge>コメント済み</Badge>}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openEdit(report)}
-                >
-                  編集
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive"
-                  onClick={() => setDeleteTarget(report)}
-                >
-                  削除
-                </Button>
+                {isAdmin && report.staffReply && (
+                  <Badge variant="destructive">返信あり</Badge>
+                )}
+                {isAdmin && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEdit(report)}
+                    >
+                      編集
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => setDeleteTarget(report)}
+                    >
+                      削除
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -544,6 +581,7 @@ export default function AdminReportsPage() {
               ) : null;
             })()}
 
+            {/* 管理者コメント表示 */}
             {report.adminComment && (
               <div className="p-3 bg-muted rounded-md">
                 <p className="text-xs font-semibold text-muted-foreground">管理者コメント</p>
@@ -551,23 +589,62 @@ export default function AdminReportsPage() {
               </div>
             )}
 
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="コメントを入力..."
-                value={commentMap[report.id] ?? ""}
-                onChange={(e) => setCommentMap((prev) => ({ ...prev, [report.id]: e.target.value }))}
-                rows={2}
-                className="flex-1"
-              />
-              <Button
-                onClick={() => handleComment(report.id)}
-                disabled={!commentMap[report.id]?.trim()}
-                size="sm"
-                className="self-end"
-              >
-                送信
-              </Button>
-            </div>
+            {/* スタッフ返信表示 */}
+            {report.staffReply && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
+                <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                  スタッフ返信
+                  {report.staffReplyAt && (
+                    <span className="font-normal ml-2">
+                      {format(new Date(report.staffReplyAt), "M/d HH:mm", { locale: ja })}
+                    </span>
+                  )}
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{report.staffReply}</p>
+              </div>
+            )}
+
+            {/* 管理者: コメント入力欄 */}
+            {isAdmin && (
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="コメントを入力..."
+                  value={commentMap[report.id] ?? ""}
+                  onChange={(e) => setCommentMap((prev) => ({ ...prev, [report.id]: e.target.value }))}
+                  rows={2}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => handleComment(report.id)}
+                  disabled={!commentMap[report.id]?.trim()}
+                  size="sm"
+                  className="self-end"
+                >
+                  送信
+                </Button>
+              </div>
+            )}
+
+            {/* スタッフ: 返信入力欄（管理者コメントがある場合のみ） */}
+            {!isAdmin && report.adminComment && (
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="管理者への返信を入力..."
+                  value={replyMap[report.id] ?? ""}
+                  onChange={(e) => setReplyMap((prev) => ({ ...prev, [report.id]: e.target.value }))}
+                  rows={2}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => handleStaffReply(report.id)}
+                  disabled={!replyMap[report.id]?.trim()}
+                  size="sm"
+                  className="self-end"
+                >
+                  返信
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
