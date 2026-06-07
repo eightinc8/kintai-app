@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import type { Attendance } from "@/types/attendance";
 import type { DailyReport } from "@/types/report";
+import type { StaffRequest } from "@/types/request";
 import type { Staff } from "@/types/user";
 
 export default function DashboardPage() {
@@ -33,6 +34,7 @@ export default function DashboardPage() {
   const [allAttendance, setAllAttendance] = useState<Attendance[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [myReports, setMyReports] = useState<DailyReport[]>([]);
+  const [allRequests, setAllRequests] = useState<StaffRequest[]>([]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -50,17 +52,24 @@ export default function DashboardPage() {
         );
       })
       .catch(() => {});
+    fetch("/api/requests")
+      .then((r) => r.json())
+      .then(setAllRequests)
+      .catch(() => {});
+    fetch("/api/staff")
+      .then((r) => r.json())
+      .then(setStaffList)
+      .catch(() => {});
     if (isAdmin) {
       fetch(`/api/attendance?month=${currentMonth}`)
         .then((r) => r.json())
         .then(setAllAttendance)
         .catch(() => {});
-      fetch("/api/staff")
-        .then((r) => r.json())
-        .then(setStaffList)
-        .catch(() => {});
     }
   }, [currentUser, isAdmin, currentMonth]);
+
+  const staffName = (email: string) =>
+    staffList.find((s) => s.email === email)?.name ?? email;
 
   const totalHours = myAttendance.reduce((sum, a) => sum + a.workHours, 0);
   const totalTransport = myAttendance.reduce(
@@ -214,6 +223,128 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* お願い：自分宛て（未対応） */}
+      {(() => {
+        const toMe = allRequests
+          .filter((r) => r.toEmail === currentUser?.email && !r.isDone)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        return toMe.length > 0 ? (
+          <Card className="border-orange-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                お願いされていること
+                <Badge variant="destructive">{toMe.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>依頼者</TableHead>
+                    <TableHead>日付</TableHead>
+                    <TableHead>内容</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {toMe.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="whitespace-nowrap">{staffName(r.fromEmail)}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {format(new Date(r.createdAt), "M/d", { locale: ja })}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{r.content}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : null;
+      })()}
+
+      {/* お願い：自分から（未対応） */}
+      {(() => {
+        const fromMe = allRequests
+          .filter((r) => r.fromEmail === currentUser?.email && !r.isDone)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        return fromMe.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>お願いしていること</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>依頼先</TableHead>
+                    <TableHead>日付</TableHead>
+                    <TableHead>内容</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fromMe.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="whitespace-nowrap">{staffName(r.toEmail)}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {format(new Date(r.createdAt), "M/d", { locale: ja })}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{r.content}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : null;
+      })()}
+
+      {/* お願い：今月完了分 */}
+      {(() => {
+        const done = allRequests
+          .filter((r) =>
+            (r.fromEmail === currentUser?.email || r.toEmail === currentUser?.email) &&
+            r.isDone &&
+            r.doneAt?.startsWith(currentMonth)
+          )
+          .sort((a, b) => b.doneAt.localeCompare(a.doneAt));
+        return done.length > 0 ? (
+          <Card className="opacity-70">
+            <CardHeader>
+              <CardTitle>今月完了したお願い</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>依頼者</TableHead>
+                    <TableHead>依頼先</TableHead>
+                    <TableHead>依頼日</TableHead>
+                    <TableHead>完了日</TableHead>
+                    <TableHead>内容</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {done.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="whitespace-nowrap">{staffName(r.fromEmail)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{staffName(r.toEmail)}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {format(new Date(r.createdAt), "M/d", { locale: ja })}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {format(new Date(r.doneAt), "M/d", { locale: ja })}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate line-through">{r.content}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : null;
+      })()}
     </div>
   );
 }
+

@@ -14,6 +14,8 @@ const staffNav = [
   { label: "日報を入力する", href: "/report", icon: "📝" },
   { label: "日報一覧", href: "/admin/reports", icon: "📄" },
   { label: "勤怠履歴", href: "/history", icon: "📋" },
+  { label: "お願い投稿", href: "/requests/new", icon: "🙏" },
+  { label: "お願い一覧", href: "/requests", icon: "📨" },
   { label: "アイディア投稿", href: "/ideas/new", icon: "✨" },
   { label: "アイディア一覧", href: "/ideas", icon: "💡" },
 ];
