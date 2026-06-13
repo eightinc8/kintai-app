@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   submitReport,
   getAllReports,
+  getReportByDate,
   submitAdminComment,
   submitStaffReply,
   deleteReport,
@@ -10,11 +11,21 @@ import {
 } from "@/modules/daily-report/services/report-service";
 import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 
-export async function GET() {
+export async function GET(request: Request) {
   const { error } = await requireAuth();
   if (error) return error;
 
   try {
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get("email");
+    const date = searchParams.get("date");
+
+    // ?email=X&date=Y → その日の日報1件（無ければ null）
+    if (email && date) {
+      const report = await getReportByDate(email, date);
+      return NextResponse.json(report ?? null);
+    }
+
     const reports = await getAllReports();
     return NextResponse.json(reports);
   } catch (e) {

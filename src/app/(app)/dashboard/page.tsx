@@ -35,7 +35,8 @@ export default function DashboardPage() {
   const [allAttendance, setAllAttendance] = useState<Attendance[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [myReports, setMyReports] = useState<DailyReport[]>([]);
-  const [myPrevReports, setMyPrevReports] = useState<DailyReport[]>([]);
+  const [monthReports, setMonthReports] = useState<DailyReport[]>([]);
+  const [prevMonthReports, setPrevMonthReports] = useState<DailyReport[]>([]);
   const [allRequests, setAllRequests] = useState<StaffRequest[]>([]);
 
   useEffect(() => {
@@ -47,13 +48,13 @@ export default function DashboardPage() {
     fetch("/api/reports")
       .then((r) => r.json())
       .then((all: DailyReport[]) => {
-        const mine = all.filter((r) => r.staffEmail === currentUser.email);
         setMyReports(
-          mine
-            .filter((r) => r.date.startsWith(currentMonth))
+          all
+            .filter((r) => r.staffEmail === currentUser.email && r.date.startsWith(currentMonth))
             .sort((a, b) => b.date.localeCompare(a.date))
         );
-        setMyPrevReports(mine.filter((r) => r.date.startsWith(prevMonth)));
+        setMonthReports(all.filter((r) => r.date.startsWith(currentMonth)));
+        setPrevMonthReports(all.filter((r) => r.date.startsWith(prevMonth)));
       })
       .catch(() => {});
     fetch("/api/requests")
@@ -81,10 +82,11 @@ export default function DashboardPage() {
     0
   );
   const daysWorked = new Set(myAttendance.map((a) => a.date)).size;
-  const totalAmazon = myReports.reduce((sum, r) => sum + (r.amazonCount || 0), 0);
-  const totalRakuten = myReports.reduce((sum, r) => sum + (r.rakutenCount || 0), 0);
-  const prevAmazon = myPrevReports.reduce((sum, r) => sum + (r.amazonCount || 0), 0);
-  const prevRakuten = myPrevReports.reduce((sum, r) => sum + (r.rakutenCount || 0), 0);
+  // 商品登録数は全スタッフの合計
+  const totalAmazon = monthReports.reduce((sum, r) => sum + (r.amazonCount || 0), 0);
+  const totalRakuten = monthReports.reduce((sum, r) => sum + (r.rakutenCount || 0), 0);
+  const prevAmazon = prevMonthReports.reduce((sum, r) => sum + (r.amazonCount || 0), 0);
+  const prevRakuten = prevMonthReports.reduce((sum, r) => sum + (r.rakutenCount || 0), 0);
 
   const staffSummary = isAdmin
     ? staffList.map((staff) => {
@@ -123,7 +125,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">
@@ -156,42 +158,51 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Amazon登録数
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalAmazon} 件</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              先月: {prevAmazon} 件
-              {prevAmazon > 0 && (
-                <span className={totalAmazon >= prevAmazon ? "text-green-600 ml-1" : "text-red-500 ml-1"}>
-                  ({totalAmazon >= prevAmazon ? "+" : ""}{totalAmazon - prevAmazon})
-                </span>
-              )}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              楽天登録数
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalRakuten} 件</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              先月: {prevRakuten} 件
-              {prevRakuten > 0 && (
-                <span className={totalRakuten >= prevRakuten ? "text-green-600 ml-1" : "text-red-500 ml-1"}>
-                  ({totalRakuten >= prevRakuten ? "+" : ""}{totalRakuten - prevRakuten})
-                </span>
-              )}
-            </p>
-          </CardContent>
-        </Card>
+      </div>
+
+      {/* 商品登録数（全スタッフ合計） */}
+      <div>
+        <p className="text-sm font-semibold text-muted-foreground mb-2">
+          商品登録数（全体）
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="border-amber-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">
+                Amazon登録数
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{totalAmazon} 件</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                先月: {prevAmazon} 件
+                {prevAmazon > 0 && (
+                  <span className={totalAmazon >= prevAmazon ? "text-green-600 ml-1" : "text-red-500 ml-1"}>
+                    ({totalAmazon >= prevAmazon ? "+" : ""}{totalAmazon - prevAmazon})
+                  </span>
+                )}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-red-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">
+                楽天登録数
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{totalRakuten} 件</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                先月: {prevRakuten} 件
+                {prevRakuten > 0 && (
+                  <span className={totalRakuten >= prevRakuten ? "text-green-600 ml-1" : "text-red-500 ml-1"}>
+                    ({totalRakuten >= prevRakuten ? "+" : ""}{totalRakuten - prevRakuten})
+                  </span>
+                )}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {isAdmin && staffSummary.length > 0 && (
