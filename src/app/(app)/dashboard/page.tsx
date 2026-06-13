@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const isAdmin = currentUser?.role === "admin";
   const [selectedDate, setSelectedDate] = useState(new Date());
   const currentMonth = format(selectedDate, "yyyy-MM");
+  const prevMonth = format(subMonths(selectedDate, 1), "yyyy-MM");
 
   const goToPrevMonth = () => setSelectedDate((d) => subMonths(d, 1));
   const goToNextMonth = () => setSelectedDate((d) => addMonths(d, 1));
@@ -34,6 +35,7 @@ export default function DashboardPage() {
   const [allAttendance, setAllAttendance] = useState<Attendance[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [myReports, setMyReports] = useState<DailyReport[]>([]);
+  const [myPrevReports, setMyPrevReports] = useState<DailyReport[]>([]);
   const [allRequests, setAllRequests] = useState<StaffRequest[]>([]);
 
   useEffect(() => {
@@ -45,11 +47,13 @@ export default function DashboardPage() {
     fetch("/api/reports")
       .then((r) => r.json())
       .then((all: DailyReport[]) => {
+        const mine = all.filter((r) => r.staffEmail === currentUser.email);
         setMyReports(
-          all
-            .filter((r) => r.staffEmail === currentUser.email && r.date.startsWith(currentMonth))
+          mine
+            .filter((r) => r.date.startsWith(currentMonth))
             .sort((a, b) => b.date.localeCompare(a.date))
         );
+        setMyPrevReports(mine.filter((r) => r.date.startsWith(prevMonth)));
       })
       .catch(() => {});
     fetch("/api/requests")
@@ -66,7 +70,7 @@ export default function DashboardPage() {
         .then(setAllAttendance)
         .catch(() => {});
     }
-  }, [currentUser, isAdmin, currentMonth]);
+  }, [currentUser, isAdmin, currentMonth, prevMonth]);
 
   const staffName = (email: string) =>
     staffList.find((s) => s.email === email)?.name ?? email;
@@ -79,6 +83,8 @@ export default function DashboardPage() {
   const daysWorked = new Set(myAttendance.map((a) => a.date)).size;
   const totalAmazon = myReports.reduce((sum, r) => sum + (r.amazonCount || 0), 0);
   const totalRakuten = myReports.reduce((sum, r) => sum + (r.rakutenCount || 0), 0);
+  const prevAmazon = myPrevReports.reduce((sum, r) => sum + (r.amazonCount || 0), 0);
+  const prevRakuten = myPrevReports.reduce((sum, r) => sum + (r.rakutenCount || 0), 0);
 
   const staffSummary = isAdmin
     ? staffList.map((staff) => {
@@ -158,6 +164,14 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{totalAmazon} 件</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              先月: {prevAmazon} 件
+              {prevAmazon > 0 && (
+                <span className={totalAmazon >= prevAmazon ? "text-green-600 ml-1" : "text-red-500 ml-1"}>
+                  ({totalAmazon >= prevAmazon ? "+" : ""}{totalAmazon - prevAmazon})
+                </span>
+              )}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -168,6 +182,14 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{totalRakuten} 件</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              先月: {prevRakuten} 件
+              {prevRakuten > 0 && (
+                <span className={totalRakuten >= prevRakuten ? "text-green-600 ml-1" : "text-red-500 ml-1"}>
+                  ({totalRakuten >= prevRakuten ? "+" : ""}{totalRakuten - prevRakuten})
+                </span>
+              )}
+            </p>
           </CardContent>
         </Card>
       </div>

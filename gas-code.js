@@ -18,10 +18,14 @@ const SHEET_CONFIGS = {
   daily_reports: [
     "id", "staff_email", "date", "todays_plan", "work_done", "good_points",
     "reflections", "admin_comment", "admin_comment_by", "admin_comment_at",
-    "created_at", "updated_at"
+    "staff_reply", "staff_reply_at", "created_at", "updated_at",
+    "amazon_count", "rakuten_count"
   ],
   ideas: [
     "id", "staff_email", "date", "content", "category", "is_done", "done_at", "done_by", "created_at"
+  ],
+  requests: [
+    "id", "from_email", "to_email", "content", "comments", "is_done", "done_at", "created_at"
   ],
   categories: [
     "id", "name", "sort_order", "created_at"
