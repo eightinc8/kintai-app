@@ -6,6 +6,8 @@ export const dailyReportSchema = z.object({
   workDone: z.string().min(1, "今日の作業報告を入力してください"),
   goodPoints: z.string().optional().default(""),
   reflections: z.string().optional().default(""),
+  amazonCount: z.number().int().min(0).optional().default(0),
+  rakutenCount: z.number().int().min(0).optional().default(0),
   ideas: z.string().optional().default(""),
 });
 

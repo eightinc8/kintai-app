@@ -61,6 +61,8 @@ export default function ReportPage() {
   const [workDone, setWorkDone] = useState("");
   const [goodPoints, setGoodPoints] = useState("");
   const [reflections, setReflections] = useState("");
+  const [amazonCount, setAmazonCount] = useState(0);
+  const [rakutenCount, setRakutenCount] = useState(0);
   const [ideas, setIdeas] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [images, setImages] = useState<ReportImage[]>([]);
@@ -95,17 +97,21 @@ export default function ReportPage() {
     // 日報の既存データを読み込み
     fetch(`/api/reports?email=${email}&date=${date}`)
       .then((r) => r.json())
-      .then((report: { todaysPlan?: string; workDone?: string; goodPoints?: string; reflections?: string } | null) => {
+      .then((report: { todaysPlan?: string; workDone?: string; goodPoints?: string; reflections?: string; amazonCount?: number; rakutenCount?: number } | null) => {
         if (report) {
           setTodaysPlan(report.todaysPlan ?? "");
           setWorkDone(report.workDone ?? "");
           setGoodPoints(report.goodPoints ?? "");
           setReflections(report.reflections ?? "");
+          setAmazonCount(report.amazonCount ?? 0);
+          setRakutenCount(report.rakutenCount ?? 0);
         } else {
           setTodaysPlan("");
           setWorkDone("");
           setGoodPoints("");
           setReflections("");
+          setAmazonCount(0);
+          setRakutenCount(0);
         }
       })
       .catch(() => {});
@@ -234,6 +240,8 @@ export default function ReportPage() {
               workDone,
               goodPoints,
               reflections,
+              amazonCount,
+              rakutenCount,
               ideas,
             },
           }),
@@ -429,6 +437,29 @@ export default function ReportPage() {
               onChange={(e) => setReflections(e.target.value)}
               rows={3}
             />
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Amazonの商品登録数</Label>
+              <Input
+                type="number"
+                min="0"
+                value={amazonCount}
+                onChange={(e) => setAmazonCount(Number(e.target.value) || 0)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>楽天の商品登録数</Label>
+              <Input
+                type="number"
+                min="0"
+                value={rakutenCount}
+                onChange={(e) => setRakutenCount(Number(e.target.value) || 0)}
+              />
+            </div>
           </div>
 
           <Separator />

@@ -68,6 +68,8 @@ export default function AdminReportsPage() {
   const [editWorkDone, setEditWorkDone] = useState("");
   const [editGoodPoints, setEditGoodPoints] = useState("");
   const [editReflections, setEditReflections] = useState("");
+  const [editAmazonCount, setEditAmazonCount] = useState(0);
+  const [editRakutenCount, setEditRakutenCount] = useState(0);
 
   const monthStr = format(currentMonth, "yyyy-MM");
 
@@ -132,6 +134,8 @@ export default function AdminReportsPage() {
     setEditWorkDone(report.workDone ?? "");
     setEditGoodPoints(report.goodPoints ?? "");
     setEditReflections(report.reflections ?? "");
+    setEditAmazonCount(report.amazonCount ?? 0);
+    setEditRakutenCount(report.rakutenCount ?? 0);
   };
 
   const saveEdit = async () => {
@@ -175,6 +179,8 @@ export default function AdminReportsPage() {
               workDone: editWorkDone,
               goodPoints: editGoodPoints,
               reflections: editReflections,
+              amazonCount: editAmazonCount,
+              rakutenCount: editRakutenCount,
             },
           }),
         })
@@ -440,6 +446,26 @@ export default function AdminReportsPage() {
                     rows={2}
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label>Amazon登録数</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={editAmazonCount}
+                      onChange={(e) => setEditAmazonCount(Number(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>楽天登録数</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={editRakutenCount}
+                      onChange={(e) => setEditRakutenCount(Number(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -547,6 +573,23 @@ export default function AdminReportsPage() {
               <div>
                 <p className="text-xs font-semibold text-muted-foreground">アイディア・要望・改善</p>
                 <p className="text-sm whitespace-pre-wrap">{report.reflections}</p>
+              </div>
+            )}
+
+            {(report.amazonCount > 0 || report.rakutenCount > 0) && (
+              <div className="flex gap-4 text-sm">
+                {report.amazonCount > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground">Amazon登録:</span>
+                    <span className="font-medium">{report.amazonCount} 件</span>
+                  </div>
+                )}
+                {report.rakutenCount > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground">楽天登録:</span>
+                    <span className="font-medium">{report.rakutenCount} 件</span>
+                  </div>
+                )}
               </div>
             )}
 

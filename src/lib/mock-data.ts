@@ -75,6 +75,8 @@ export const mockReports: DailyReport[] = [
     workDone: "新機能の実装を行いました。",
     goodPoints: "予定通りに完了できた。",
     reflections: "テストコードを先に書くべきだった。",
+    amazonCount: 0,
+    rakutenCount: 0,
     adminComment: "",
     adminCommentBy: "",
     adminCommentAt: "",

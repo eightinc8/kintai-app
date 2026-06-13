@@ -77,6 +77,8 @@ export default function DashboardPage() {
     0
   );
   const daysWorked = new Set(myAttendance.map((a) => a.date)).size;
+  const totalAmazon = myReports.reduce((sum, r) => sum + (r.amazonCount || 0), 0);
+  const totalRakuten = myReports.reduce((sum, r) => sum + (r.rakutenCount || 0), 0);
 
   const staffSummary = isAdmin
     ? staffList.map((staff) => {
@@ -115,7 +117,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">
@@ -146,6 +148,26 @@ export default function DashboardPage() {
             <p className="text-3xl font-bold">
               {totalTransport.toLocaleString()} 円
             </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">
+              Amazon登録数
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{totalAmazon} 件</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">
+              楽天登録数
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{totalRakuten} 件</p>
           </CardContent>
         </Card>
       </div>
