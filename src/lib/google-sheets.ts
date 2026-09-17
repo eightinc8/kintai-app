@@ -1,5 +1,6 @@
 const GAS_URL = process.env.GAS_URL;
 const GAS_SECRET = process.env.GAS_SECRET;
+const GAS_TIMEOUT_MS = 60_000;
 
 function getBaseUrl() {
   if (!GAS_URL || !GAS_SECRET) {
@@ -21,7 +22,10 @@ async function gasGet(params: Record<string, string>): Promise<unknown> {
   for (const [k, v] of Object.entries(params)) {
     url.searchParams.set(k, v);
   }
-  const res = await fetch(url.toString(), { cache: "no-store" });
+  const res = await fetch(url.toString(), {
+    cache: "no-store",
+    signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`GAS request failed: ${res.status}`);
   const data = await res.json();
   return checkGasError(data);
@@ -41,6 +45,7 @@ async function gasPost(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
     cache: "no-store",
+    signal: AbortSignal.timeout(GAS_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`GAS request failed: ${res.status}`);
   const data = await res.json();
