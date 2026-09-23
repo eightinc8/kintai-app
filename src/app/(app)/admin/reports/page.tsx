@@ -557,7 +557,18 @@ export default function AdminReportsPage() {
                     </div>
                   )}
                 </div>
-              ) : null;
+              ) : (
+                <div className="flex items-center gap-2 text-sm p-2 rounded-md bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+                  <span className="font-medium text-red-600 dark:text-red-400">
+                    勤怠が未登録です
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {isAdmin
+                      ? "「編集」から出勤・退勤時間を入力してください"
+                      : "管理者にご連絡ください"}
+                  </span>
+                </div>
+              );
             })()}
             {report.todaysPlan && (
               <div>

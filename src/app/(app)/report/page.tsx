@@ -212,46 +212,54 @@ export default function ReportPage() {
     if (!currentUser) return;
     setSubmitting(true);
     try {
-      const [attRes, repRes] = await Promise.all([
-        fetch("/api/attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            staffEmail: currentUser.email,
+      // 勤怠を先に保存する。同時に送ると勤怠だけ失敗したときに
+      // 日報だけが残り、勤務時間が消えた状態になるため。
+      const attRes = await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staffEmail: currentUser.email,
+          date,
+          shifts: shifts.map((s) => ({
             date,
-            shifts: shifts.map((s) => ({
-              date,
-              clockIn: s.clockIn,
-              clockOut: s.clockOut,
-              breakMinutes: s.breakMinutes,
-              transportCost: Number(s.transportCost),
-              workStyle: s.workStyle,
-            })),
-          }),
+            clockIn: s.clockIn,
+            clockOut: s.clockOut,
+            breakMinutes: s.breakMinutes,
+            transportCost: Number(s.transportCost),
+            workStyle: s.workStyle,
+          })),
         }),
-        fetch("/api/reports", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            staffEmail: currentUser.email,
-            data: {
-              date,
-              todaysPlan: hasRemoteShift ? todaysPlan : "",
-              workDone,
-              goodPoints,
-              reflections,
-              amazonCount,
-              rakutenCount,
-              ideas,
-            },
-          }),
-        }),
-      ]);
+      });
+      if (!attRes.ok) {
+        toast.error("勤怠の保存に失敗しました。もう一度「保存する」を押してください");
+        return;
+      }
 
-      if (!attRes.ok || !repRes.ok) throw new Error("save failed");
+      const repRes = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staffEmail: currentUser.email,
+          data: {
+            date,
+            todaysPlan: hasRemoteShift ? todaysPlan : "",
+            workDone,
+            goodPoints,
+            reflections,
+            amazonCount,
+            rakutenCount,
+            ideas,
+          },
+        }),
+      });
+      if (!repRes.ok) {
+        toast.error("勤怠は保存できましたが、業務報告の保存に失敗しました。もう一度「保存する」を押してください");
+        return;
+      }
+
       toast.success("日報を保存しました");
     } catch {
-      toast.error("保存に失敗しました");
+      toast.error("通信エラーです。もう一度「保存する」を押してください");
     } finally {
       setSubmitting(false);
     }
