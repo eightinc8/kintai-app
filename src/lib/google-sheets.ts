@@ -52,11 +52,40 @@ async function gasPost(
   return checkGasError(data);
 }
 
+// シート全体の読み込みは短時間キャッシュする。
+// 1画面で4〜5回、複数人が同時に開くとGASが順番待ちになりタイムアウトするため。
+// 行番号を返す find 系はキャッシュしない（古い行番号で書き込むと別の行を壊すため）。
+const ROWS_TTL_MS = 30_000;
+const rowsCache = new Map<string, { rows: Record<string, string>[]; expiresAt: number }>();
+const rowsInFlight = new Map<string, Promise<Record<string, string>[]>>();
+
+function invalidateRowsCache(sheetName: string) {
+  rowsCache.delete(sheetName);
+}
+
 export async function getRows(
   sheetName: string
 ): Promise<Record<string, string>[]> {
-  const data = await gasGet({ action: "getRows", sheet: sheetName });
-  return data as Record<string, string>[];
+  const cached = rowsCache.get(sheetName);
+  if (cached && cached.expiresAt > Date.now()) return cached.rows;
+
+  // 同時に同じシートを要求された場合は1回のGAS通信を共有する
+  const inFlight = rowsInFlight.get(sheetName);
+  if (inFlight) return inFlight;
+
+  const pending = (async () => {
+    const data = await gasGet({ action: "getRows", sheet: sheetName });
+    const rows = data as Record<string, string>[];
+    rowsCache.set(sheetName, { rows, expiresAt: Date.now() + ROWS_TTL_MS });
+    return rows;
+  })();
+
+  rowsInFlight.set(sheetName, pending);
+  try {
+    return await pending;
+  } finally {
+    rowsInFlight.delete(sheetName);
+  }
 }
 
 export async function findRows(
@@ -104,6 +133,7 @@ export async function appendRow(
   data: Record<string, string>
 ): Promise<void> {
   await gasPost({ action: "appendRow", sheet: sheetName }, data);
+  invalidateRowsCache(sheetName);
 }
 
 export async function updateRow(
@@ -115,6 +145,7 @@ export async function updateRow(
     { action: "updateRow", sheet: sheetName, rowIndex: String(rowIndex) },
     data
   );
+  invalidateRowsCache(sheetName);
 }
 
 export async function deleteRow(
@@ -126,6 +157,7 @@ export async function deleteRow(
     sheet: sheetName,
     rowIndex: String(rowIndex),
   });
+  invalidateRowsCache(sheetName);
 }
 
 export async function uploadFile(
