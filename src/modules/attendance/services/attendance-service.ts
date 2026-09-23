@@ -173,24 +173,20 @@ export async function submitAttendanceShifts(
 ): Promise<Attendance[]> {
   const now = new Date().toISOString();
 
-  // 1. 既存行を取得（rowIndex付き）
   const existingRows = await findRows("attendance", "staff_email", staffEmail);
-  const matchingRows = existingRows.filter((r) => r.data.date === date);
+  const matchingRows = existingRows
+    .filter((r) => r.data.date === date)
+    .sort((a, b) => a.rowIndex - b.rowIndex);
 
-  // 2. 既存行を降順で削除（インデックスずれ防止）
-  const sortedIndices = matchingRows
-    .map((r) => r.rowIndex)
-    .sort((a, b) => b - a);
-  for (const idx of sortedIndices) {
-    await deleteRow("attendance", idx);
-  }
-
-  // 3. 新しいシフトを追加
+  // 既存行は上書き、足りない分だけ追加、余った行は最後に削除する。
+  // 先に削除すると途中で失敗したときに勤怠が消えたままになるため。
   const results: Attendance[] = [];
-  for (const shift of shifts) {
+  for (let i = 0; i < shifts.length; i++) {
+    const shift = shifts[i];
+    const existing = matchingRows[i];
     const breakMin = shift.breakMinutes ?? 0;
     const attendance: Attendance = {
-      id: uuidv4(),
+      id: existing ? existing.data.id : uuidv4(),
       staffEmail,
       date: shift.date,
       clockIn: shift.clockIn,
@@ -199,11 +195,23 @@ export async function submitAttendanceShifts(
       workHours: calcWorkHours(shift.clockIn, shift.clockOut, breakMin),
       transportCost: shift.transportCost,
       workStyle: shift.workStyle,
-      createdAt: now,
+      createdAt: existing ? existing.data.created_at : now,
       updatedAt: now,
     };
-    await appendRow("attendance", attendanceToRow(attendance));
+    if (existing) {
+      await updateRow("attendance", existing.rowIndex, attendanceToRow(attendance));
+    } else {
+      await appendRow("attendance", attendanceToRow(attendance));
+    }
     results.push(attendance);
+  }
+
+  const leftover = matchingRows
+    .slice(shifts.length)
+    .map((r) => r.rowIndex)
+    .sort((a, b) => b - a);
+  for (const idx of leftover) {
+    await deleteRow("attendance", idx);
   }
 
   return results;

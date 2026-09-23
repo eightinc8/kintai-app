@@ -146,26 +146,32 @@ export default function AdminReportsPage() {
       const att = atts.length > 0 ? atts[0] : null;
       const promises: Promise<Response>[] = [];
 
-      // Update attendance (first shift only)
-      if (att) {
-        promises.push(
-          fetch("/api/attendance", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: att.id,
-              data: {
-                date: att.date,
-                clockIn: editClockIn,
-                clockOut: editClockOut,
-                breakMinutes: editBreakMinutes,
-                transportCost: Number(editTransport),
-                workStyle: editWorkStyle,
-              },
-            }),
-          })
-        );
-      }
+      // Update attendance (first shift only). 勤怠が未登録の日は新規作成する
+      const shiftData = {
+        date: editReport.date,
+        clockIn: editClockIn,
+        clockOut: editClockOut,
+        breakMinutes: editBreakMinutes,
+        transportCost: Number(editTransport),
+        workStyle: editWorkStyle,
+      };
+      promises.push(
+        att
+          ? fetch("/api/attendance", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: att.id, data: { ...shiftData, date: att.date } }),
+            })
+          : fetch("/api/attendance", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                staffEmail: editReport.staffEmail,
+                date: editReport.date,
+                shifts: [shiftData],
+              }),
+            })
+      );
 
       // Update report
       promises.push(

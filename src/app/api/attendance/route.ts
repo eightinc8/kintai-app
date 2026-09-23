@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const staffEmail = body.staffEmail;
-    if (staffEmail !== session!.user.email) {
+    if (staffEmail !== session!.user.email && session!.user.role !== "admin") {
       return NextResponse.json({ error: "他のユーザーとしての操作はできません" }, { status: 403 });
     }
 
