@@ -69,10 +69,13 @@ export default function ReportPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 日付変更時に既存データを読み込む
+  // 日付変更時に既存データを読み込む。
+  // 依存はメールアドレスだけにする。オブジェクトを見ると再描画のたびに
+  // 読み込み直しが走り、入力途中の内容が消えるため。
+  const userEmail = currentUser?.email;
   useEffect(() => {
-    if (!currentUser) return;
-    const email = encodeURIComponent(currentUser.email);
+    if (!userEmail) return;
+    const email = encodeURIComponent(userEmail);
 
     // 勤怠の既存シフトを読み込み
     fetch(`/api/attendance?email=${email}&date=${date}`)
@@ -123,7 +126,7 @@ export default function ReportPage() {
         setImages(Array.isArray(imgs) ? imgs : []);
       })
       .catch(() => setImages([]));
-  }, [date, currentUser]);
+  }, [date, userEmail]);
 
   const shiftWorkHours = useMemo(
     () => shifts.map((s) => calcWorkHours(s.clockIn, s.clockOut, s.breakMinutes)),
@@ -242,7 +245,7 @@ export default function ReportPage() {
           staffEmail: currentUser.email,
           data: {
             date,
-            todaysPlan: hasRemoteShift ? todaysPlan : "",
+            todaysPlan,
             workDone,
             goodPoints,
             reflections,
@@ -402,7 +405,8 @@ export default function ReportPage() {
           <CardTitle>業務報告</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {hasRemoteShift && (
+          {/* 在宅時に記入する欄。入力済みなら出勤に切り替えても隠さない（内容が消えて見えるため） */}
+          {(hasRemoteShift || todaysPlan.trim()) && (
             <div className="space-y-1">
               <Label>今日の作業の内容</Label>
               <p className="text-xs text-muted-foreground mb-1">在宅での出勤時に記入</p>

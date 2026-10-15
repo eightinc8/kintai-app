@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import type { Staff } from "@/types/user";
 
@@ -15,30 +15,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const loading = status === "loading";
 
-  const currentUser: Staff | null =
-    session?.user?.staffId
-      ? {
-          id: session.user.staffId,
-          email: session.user.email ?? "",
-          name: session.user.name ?? "",
-          nameKana: session.user.nameKana ?? "",
-          role: session.user.role ?? "staff",
-          startMonth: "",
-          address: "",
-          phone: "",
-          birthday: "",
-          familyComposition: "",
-          isActive: true,
-          createdAt: "",
-          updatedAt: "",
-        }
-      : null;
+  const staffId = session?.user?.staffId;
+  const email = session?.user?.email ?? "";
+  const name = session?.user?.name ?? "";
+  const nameKana = session?.user?.nameKana ?? "";
+  const role = session?.user?.role ?? "staff";
 
-  return (
-    <AuthContext.Provider value={{ currentUser, loading }}>
-      {children}
-    </AuthContext.Provider>
+  // 毎回新しいオブジェクトを作ると、タブを切り替えてセッションが再取得された
+  // だけで currentUser が別物になり、入力中の画面が読み込み直されてしまう。
+  const currentUser: Staff | null = useMemo(
+    () =>
+      staffId
+        ? {
+            id: staffId,
+            email,
+            name,
+            nameKana,
+            role,
+            startMonth: "",
+            address: "",
+            phone: "",
+            birthday: "",
+            familyComposition: "",
+            isActive: true,
+            createdAt: "",
+            updatedAt: "",
+          }
+        : null,
+    [staffId, email, name, nameKana, role]
   );
+
+  const value = useMemo(() => ({ currentUser, loading }), [currentUser, loading]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
