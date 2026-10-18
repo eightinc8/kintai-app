@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { format, addMonths, subMonths } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useAuth } from "@/lib/auth-context";
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [monthReports, setMonthReports] = useState<DailyReport[]>([]);
   const [prevMonthReports, setPrevMonthReports] = useState<DailyReport[]>([]);
   const [allRequests, setAllRequests] = useState<StaffRequest[]>([]);
+  const [openStaff, setOpenStaff] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -90,15 +91,16 @@ export default function DashboardPage() {
 
   const staffSummary = isAdmin
     ? staffList.map((staff) => {
-        const records = allAttendance.filter(
-          (a) => a.staffEmail === staff.email
-        );
+        const records = allAttendance
+          .filter((a) => a.staffEmail === staff.email)
+          .sort((a, b) => a.date.localeCompare(b.date));
         return {
           name: staff.name,
           email: staff.email,
           days: new Set(records.map((a) => a.date)).size,
           hours: records.reduce((s, a) => s + a.workHours, 0),
           transport: records.reduce((s, a) => s + a.transportCost, 0),
+          records,
         };
       })
     : [];
@@ -221,16 +223,74 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {staffSummary.map((s) => (
-                  <TableRow key={s.email}>
-                    <TableCell>{s.name}</TableCell>
-                    <TableCell className="text-right">{s.days} 日</TableCell>
-                    <TableCell className="text-right">{s.hours} 時間</TableCell>
-                    <TableCell className="text-right">
-                      {s.transport.toLocaleString()} 円
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {staffSummary.map((s) => {
+                  const isOpen = openStaff === s.email;
+                  return (
+                    <Fragment key={s.email}>
+                      <TableRow
+                        className={s.records.length > 0 ? "cursor-pointer hover:bg-muted/50" : ""}
+                        onClick={() =>
+                          s.records.length > 0 &&
+                          setOpenStaff(isOpen ? null : s.email)
+                        }
+                      >
+                        <TableCell>
+                          <span className="flex items-center gap-1">
+                            {s.records.length > 0 && (
+                              <span className="text-xs text-muted-foreground w-3">
+                                {isOpen ? "▼" : "▶"}
+                              </span>
+                            )}
+                            {s.name}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">{s.days} 日</TableCell>
+                        <TableCell className="text-right">{s.hours} 時間</TableCell>
+                        <TableCell className="text-right">
+                          {s.transport.toLocaleString()} 円
+                        </TableCell>
+                      </TableRow>
+
+                      {isOpen && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={4} className="bg-muted/30 p-0">
+                            <div className="px-4 py-3 space-y-1">
+                              {s.records.map((a) => (
+                                <div
+                                  key={a.id}
+                                  className="flex items-center gap-3 text-sm flex-wrap py-1 border-b last:border-b-0"
+                                >
+                                  <span className="w-20 whitespace-nowrap">
+                                    {format(new Date(a.date), "M/d（E）", { locale: ja })}
+                                  </span>
+                                  <span className="whitespace-nowrap">
+                                    {a.clockIn} - {a.clockOut}
+                                  </span>
+                                  {a.breakMinutes > 0 && (
+                                    <span className="text-muted-foreground whitespace-nowrap">
+                                      休憩 {a.breakMinutes}分
+                                    </span>
+                                  )}
+                                  <span className="font-medium whitespace-nowrap">
+                                    {a.workHours} 時間
+                                  </span>
+                                  <Badge variant="outline">
+                                    {a.workStyle === "office" ? "出勤" : "在宅"}
+                                  </Badge>
+                                  {a.transportCost > 0 && (
+                                    <span className="text-muted-foreground whitespace-nowrap">
+                                      {a.transportCost.toLocaleString()} 円
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
